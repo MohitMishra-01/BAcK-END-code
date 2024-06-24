@@ -16,7 +16,7 @@ const comboProductSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-    catagory: {
+    category: {
       type: String,
       required: true,
     },
