@@ -9,7 +9,7 @@ const storeRoutes = require("./routes/store")
 const imageRoutes = require('./routes/image')
 const stripeRoutes = require('./routes/stripe')
 const invoiceRoutes = require('./routes/invoice');
-const couponRoutes = require('./routes/coupon')
+const comboRoutes = require('./routes/combo')
 const cors = require("cors")
 
 const app = express();
@@ -41,7 +41,7 @@ app.use('/api/invoice', invoiceRoutes);
 // Admin Routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/store', storeRoutes);
-app.use('/api/coupon', couponRoutes);
+app.use('/api/combo', comboRoutes);
 
 
 // Error handling middleware
