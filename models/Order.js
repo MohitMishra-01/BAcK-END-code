@@ -7,6 +7,19 @@ const orderSchema = new mongoose.Schema(
     products: [
       { productId: { type: String }, quantity: { type: Number, default: 1 }, productName: {type: String},extraTopings: {type: String}, imageUrl: {type: String} },
     ],
+    combo: [
+      {
+        offerName: { type: String, required: true },
+        pizzas: [
+          {
+            title: { type: String, required: true },
+            toppings: { type: String },
+          }
+        ],
+        addedItems: { type: String },
+        extraAdded: { type: String },
+      }
+    ],
     subtotal: { type: Number, required: true },
     total: { type: Number, required: true },
     shipping: { type: Object, required: true },
