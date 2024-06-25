@@ -76,5 +76,61 @@ const getComboAllFoods = async (req, res) => {
     }
 };
 
+const deleteComboProduct = async (req, res) => {
+    const productId = req.params.id;
+    try {
+        const deletedProduct = await Combo.findByIdAndDelete(productId);
+        // if user not found
+        if(!deletedProduct){
+            return res.status(404).json({message: "Product not found!"});
+        }
+        res.status(200).json({message: "Product Deleted Successfully!"});
+    } catch (error) {
+        res.status(500).json({message: error.message});
+    }
+}
 
-module.exports = {createComboFood, getComboFoodById, getComboAllFoods}
+const updateComboProductDetails = async (req, res) => {
+    try {
+        const { id, img, title, desc, category, prices, extraOptions, productType } = req.body;
+        
+        // Find the product by ID
+        const product = await Combo.findById(id);
+        
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                error: "Product not found",
+            });
+        }
+
+        // Update the product details
+        if (img) product.img = img;
+        if (title) product.title = title;
+        if (desc) product.desc = desc;
+        if (category) product.category = category;
+        if (prices) product.prices = prices;
+        if (productType) product.productType = productType;
+        if (extraOptions) product.extraOptions = extraOptions;
+
+        // Save the updated product
+        await product.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Product details updated successfully",
+            data: {
+                product,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            error: "Internal Server Error",
+        });
+    }
+};
+
+
+module.exports = {createComboFood, getComboFoodById, getComboAllFoods, deleteComboProduct, updateComboProductDetails}
