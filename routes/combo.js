@@ -10,4 +10,4 @@ router.get("/allComboFood/:catagory", getComboAllFoods)
 router.delete("/comboProductDelete/:id", deleteComboProduct);
 router.put("/updateProductDetails", updateComboProductDetails);
 
-module.exports = router; 
+module.exports = router;  
