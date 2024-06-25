@@ -80,6 +80,7 @@ const deleteComboProduct = async (req, res) => {
     const productId = req.params.id;
     try {
         const deletedProduct = await Combo.findByIdAndDelete(productId);
+        
         // if user not found
         if(!deletedProduct){
             return res.status(404).json({message: "Product not found!"});
