@@ -189,7 +189,7 @@ const getAllOrders = async (req, res) => {
 
        res.status(200).json({
           message: "View Order Successfully",
-          successz: true,
+          success: true,
           data:{
               order: orderItems,
           }
