@@ -2,6 +2,7 @@ const Stripe = require("stripe");
 const { Order } = require("../models/Order");
 require("dotenv").config();
 const zlib = require('zlib');
+const { sendNewOrder } = require('./sseController'); 
 
 const stripe = Stripe(process.env.STRIPE_KEY);
 
@@ -119,6 +120,9 @@ const createOrder = async (customer, data) => {
 
     const savedOrder = await newOrder.save();
     console.log("Processed Order:", savedOrder);
+
+    // Emit SSE event
+    sendNewOrder(savedOrder);
   } catch (error) {
     console.log("Error in createOrder:", error);
   }
