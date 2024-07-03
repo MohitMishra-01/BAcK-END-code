@@ -10,6 +10,7 @@ const imageRoutes = require('./routes/image')
 const stripeRoutes = require('./routes/stripe')
 const invoiceRoutes = require('./routes/invoice');
 const comboRoutes = require('./routes/combo')
+const sseRoutes = require('./routes/sseRoutes');
 const cors = require("cors")
 
 const app = express();
@@ -43,6 +44,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/combo', comboRoutes);
 
+// SSE Route
+app.use('/api/sse', sseRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
