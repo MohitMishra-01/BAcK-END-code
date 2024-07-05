@@ -1,2 +1,233 @@
 node_modules
 .env
+
+
+
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { baseUrl } from '../../functions/baseUrl';
+import { redableTimeStamp } from '../../functions/readbleTimeFormat';
+import './Orders.css';
+
+
+function Orders() {
+  const [allOrders, setAllOrders] = useState(null);
+  const [status, setStatus] = useState([
+    "Pending",
+    "Processing",
+    "Shipped",
+    "Delivered",
+    "Cancelled",
+  ]);
+
+  useEffect(() => {
+    fetchAllOrders();
+
+    // Setup SSE
+    const eventSource = new EventSource(`${baseUrl}/api/sse/orders`);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const newOrder = JSON.parse(event.data);
+        console.log('New order received:', newOrder);
+        fetchAllOrders(); // Update orders list when new order arrives
+      } catch (error) {
+        console.error('Error parsing SSE message:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('EventSource failed:', error);
+    };
+
+    return () => {
+      eventSource.close(); // Clean up EventSource connection when component unmounts
+    };
+  }, []);
+
+  const fetchAllOrders = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const email = localStorage.getItem('userEmail');
+
+      if (!token) {
+        throw new Error('Token not found');
+      }
+
+      const response = await axios.get(`${baseUrl}/api/stripe/allOrder/${email}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.data.success) {
+        console.error('API response:', response.data);
+        throw new Error(response.data.error || 'Failed to fetch orders');
+      }
+
+      setAllOrders(response.data.data.order);
+    } catch (error) {
+      console.error('Error fetching orders:', error.message);
+      // Handle error cases here...
+    }
+  };
+
+  const handleChange = async (orderId, value) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `${baseUrl}/api/admin/order-status/${orderId}`,
+        { delivery_status: value },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to update order status');
+      }
+
+      // Update local state or refetch orders after successful update
+      fetchAllOrders();
+    } catch (error) {
+      console.error('Error updating order status:', error.message);
+      // Handle error cases here...
+    }
+  };
+
+  return (
+    <div className='orders-wrapper'>
+      <h2>Orders</h2>
+      <div className='all-orders'>
+        {allOrders ? (
+          <table>
+            <thead>
+              <tr>
+                <th>Order No.</th>
+                <th>Order Details</th>
+                <th>Customer Details</th>
+                <th>Order & Payment Status</th>
+                <th>Ordered at</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allOrders.map((item, index) => (
+                <tr key={item._id}>
+                  <td>{allOrders.length - index}</td>
+                  <td>
+                    <div className='order-details'>
+                      {item.products && (
+                        <>
+                          <div className='order-subtitle'>Regular Orders:</div>
+                          <table className='order-details-table'>
+                            <thead>
+                              <tr>
+                                <th>Sl No.</th>
+                                <th>Name</th>
+                                <th>Qty</th>
+                                <th>Toppings</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {item.products.map((product, productIdx) => (
+                                <tr key={product.productId}>
+                                  <td>{productIdx + 1}</td>
+                                  <td>{product.productName}</td>
+                                  <td>{product.quantity}</td>
+                                  <td>{product.extraTopings}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </>
+                      )}
+                      {item.combo && (
+                        <>
+                          <div className='order-subtitle'>Special Offers:</div>
+                          <table className='order-details-table'>
+                            <thead>
+                              <tr>
+                                <th>Offer Name</th>
+                                <th>Added Items</th>
+                                <th>Extra Added</th>
+                                <th>Main Course</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {item.combo.map((combo, comboIdx) => (
+                                <tr key={`combo-${comboIdx}`}>
+                                  <td>{combo.offerName}</td>
+                                  <td>{combo.addedItems}</td>
+                                  <td>{combo.extraAdded}</td>
+                                  <td>
+                                    <table>
+                                      <thead>
+                                        <tr>
+                                          <th>Pizza</th>
+                                          <th>Toppings</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {combo.pizzas.map((pizza, pizzaIdx) => (
+                                          <tr key={`pizza-${pizzaIdx}`}>
+                                            <td>{pizza.title}</td>
+                                            <td>{pizza.toppings}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div className='customer-details'>
+                      <span><b>Name:</b> {item.shipping.name}</span><br />
+                      <span><b>Email:</b> {item.shipping.email}</span><br />
+                      <span><b>Phone:</b> {item.shipping.phone}</span><br />
+                      <span><b>Country:</b> {item.shipping.address.country}</span><br />
+                      <span><b>City:</b> {item.shipping.address.city}</span><br />
+                      <span><b>State:</b> {item.shipping.address.state}</span><br />
+                      <span><b>Line 1:</b> {item.shipping.address.line1}</span><br />
+                      <span><b>Line 2:</b> {item.shipping.address.line2}</span><br />
+                      <span><b>Postal Code:</b> {item.shipping.address.postal_code}</span><br />
+                      <span><b>Order ID:</b> {item._id}</span><br />
+                      <span><b>User ID:</b> {item.userId}</span><br />
+                    </div>
+                  </td>
+                  <td>
+                    <div className='order-payment-status'>
+                      <span><b>Payment:</b> {item.payment_status}</span><br />
+                      <span><b>Total Amount:</b> ${item.total}</span><br />
+                      <span><b>Delivery Status:</b></span><br />
+                      <select
+                        value={item.delivery_status}
+                        onChange={(e) => handleChange(item._id, e.target.value)}
+                      >
+                        {status.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </td>
+                  <td>{redableTimeStamp(item.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div>Loading...</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default Orders;
